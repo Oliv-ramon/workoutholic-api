@@ -1,13 +1,12 @@
+using Workoutholic.Api;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -16,29 +15,28 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+var workouts = new List<Workout>();
 
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/workout", (Workout workout) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    workouts.Add(workout);
+});
+
+app.MapGet("/workout", () =>
+{
+    return workouts;
+});
+
+app.MapPut("workout/{id}", (string id, Workout putData) =>
+{
+    var workoutIndex = workouts.FindIndex((workout) => workout.Id == id);
+    workouts[workoutIndex] = putData;
+});
+
+app.MapDelete("workout/{id}", (string id) =>
+{
+    var workoutIndex = workouts.FindIndex((workout) => workout.Id == id);
+    workouts.RemoveAt(workoutIndex);
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
